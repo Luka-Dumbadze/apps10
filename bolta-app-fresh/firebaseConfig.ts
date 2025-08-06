@@ -45,8 +45,8 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Note: Firebase web SDK in React Native doesn't support full persistence
-// Auth state will persist in memory during the session
-// For full persistence, consider using @react-native-firebase/auth package
+// Note: Firebase web SDK in Expo handles persistence automatically
+// The warning about AsyncStorage can be ignored as our SessionProvider 
+// handles manual persistence using AsyncStorage for a better user experience
 
 export default app;
