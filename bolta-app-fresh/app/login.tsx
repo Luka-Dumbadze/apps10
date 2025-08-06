@@ -21,6 +21,8 @@ export default function Login() {
     setLoading(true);
     try {
       await signIn(email, password);
+      // Navigate immediately after successful login
+      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Login Error', error.message);
     } finally {

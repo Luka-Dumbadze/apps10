@@ -10,7 +10,7 @@ import {
   Alert,
   RefreshControl
 } from 'react-native';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useSession } from '../../providers/SessionProvider';
 import { Reward } from '../../types';
@@ -78,7 +78,7 @@ export default function Marketplace() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { user } = useSession();
+  const { user, updateBoltBalance } = useSession();
 
   /**
    * Fetch rewards from Firestore
@@ -167,14 +167,63 @@ export default function Marketplace() {
 
   /**
    * Handle reward redemption
-   * This is a placeholder - you'll implement the actual redemption logic later
+   * Deduct bolts from user balance and create redemption record
    */
-  const handleRewardRedemption = (reward: Reward) => {
-    // TODO: Implement actual redemption logic
-    Alert.alert(
-      'Coming Soon',
-      'Reward redemption functionality will be implemented in the next phase!'
-    );
+  const handleRewardRedemption = async (reward: Reward) => {
+    if (!user) {
+      Alert.alert('Error', 'Please log in to redeem rewards');
+      return;
+    }
+
+    try {
+      // Calculate new balance
+      const newBalance = user.boltBalance - reward.boltCost;
+      
+      // Create redemption record first
+      const redemptionData = {
+        userId: user.uid,
+        userName: user.name,
+        userEmail: user.email,
+        rewardId: reward.rewardId,
+        rewardTitle: reward.rewardTitle,
+        partnerName: reward.partnerName,
+        boltCost: reward.boltCost,
+        status: 'completed',
+        redeemedAt: serverTimestamp(),
+        expiryDate: new Date(Date.now() + (reward.expiryDays * 24 * 60 * 60 * 1000)).toISOString()
+      };
+
+      // Add redemption record to Firestore
+      await addDoc(collection(db, 'redemptions'), redemptionData);
+      
+      // Update user's bolt balance
+      await updateBoltBalance(newBalance);
+      
+      // Update reward stock count (if needed)
+      if (reward.stockCount > 0) {
+        const rewardDocRef = doc(db, 'rewards', reward.rewardId);
+        await updateDoc(rewardDocRef, {
+          stockCount: reward.stockCount - 1
+        });
+      }
+      
+      // Show success message
+      Alert.alert(
+        'Redemption Successful! 🎉',
+        `You have successfully redeemed "${reward.rewardTitle}"!\n\nYour new balance: ⚡ ${newBalance} bolts\n\nRedemption details will be sent to your email.`,
+        [{ text: 'OK', style: 'default' }]
+      );
+      
+      // Refresh rewards list to update stock count and user balance
+      await fetchRewards();
+      
+    } catch (error) {
+      console.error('Error redeeming reward:', error);
+      Alert.alert(
+        'Redemption Failed',
+        'There was an error processing your redemption. Please try again.'
+      );
+    }
   };
 
   /**

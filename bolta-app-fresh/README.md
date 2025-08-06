@@ -18,12 +18,17 @@ service cloud.firestore {
     // Allow read access to rewards collection
     match /rewards/{document} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true; // TEMPORARY: Remove this in production
     }
     
     // Allow authenticated users to read/write their own data
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to create redemptions
+    match /redemptions/{document} {
+      allow read, write: if request.auth != null;
     }
   }
 }

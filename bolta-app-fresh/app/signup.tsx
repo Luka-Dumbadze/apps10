@@ -22,6 +22,8 @@ export default function SignUp() {
     setLoading(true);
     try {
       await signUp(email, password, name);
+      // Navigate immediately after successful signup
+      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Sign Up Error', error.message);
     } finally {
