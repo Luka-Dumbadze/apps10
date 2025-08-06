@@ -8,6 +8,7 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '../firebaseConfig';
 import { User, FirebaseTimestamp } from '../types';
 
@@ -43,6 +44,35 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Load persisted user data on app start
+  useEffect(() => {
+    const loadPersistedUser = async () => {
+      try {
+        const persistedUser = await AsyncStorage.getItem('bolta_user');
+        if (persistedUser) {
+          setUser(JSON.parse(persistedUser));
+        }
+      } catch (error) {
+        console.error('Error loading persisted user:', error);
+      }
+    };
+
+    loadPersistedUser();
+  }, []);
+
+  // Helper function to persist user data
+  const persistUser = async (userData: User | null) => {
+    try {
+      if (userData) {
+        await AsyncStorage.setItem('bolta_user', JSON.stringify(userData));
+      } else {
+        await AsyncStorage.removeItem('bolta_user');
+      }
+    } catch (error) {
+      console.error('Error persisting user data:', error);
+    }
+  };
+
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(
       auth,
@@ -64,20 +94,26 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 lastActive: now
               });
 
-              setUser({
+              const updatedUser = {
                 ...userData,
                 lastActive: now
-              });
+              };
+
+              setUser(updatedUser);
+              await persistUser(updatedUser); // Persist to AsyncStorage
             } else {
               console.error('User document not found in Firestore');
               setUser(null);
+              await persistUser(null);
             }
           } catch (error) {
             console.error('Error fetching user data:', error);
             setUser(null);
+            await persistUser(null);
           }
         } else {
           setUser(null);
+          await persistUser(null);
         }
         setLoading(false);
       },
@@ -135,6 +171,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     try {
       await firebaseSignOut(auth);
       setUser(null);
+      await persistUser(null); // Clear persisted data
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -152,9 +189,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         boltBalance: newBalance
       });
 
-      setUser(prevUser => 
-        prevUser ? { ...prevUser, boltBalance: newBalance } : null
-      );
+      const updatedUser = { ...user, boltBalance: newBalance };
+      setUser(updatedUser);
+      await persistUser(updatedUser); // Persist updated data
     } catch (error) {
       console.error('Error updating bolt balance:', error);
       throw error;

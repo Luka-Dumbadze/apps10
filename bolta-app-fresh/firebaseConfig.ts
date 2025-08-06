@@ -1,7 +1,7 @@
 // firebaseConfig.ts
 import { initializeApp } from "firebase/app";
 import { getStorage } from "firebase/storage";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Validate environment variables
@@ -45,10 +45,8 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Configure persistence for auth state
-// This ensures user stays logged in between app sessions
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.warn('Firebase Auth persistence setup failed:', error);
-});
+// Note: Firebase web SDK in React Native doesn't support full persistence
+// Auth state will persist in memory during the session
+// For full persistence, consider using @react-native-firebase/auth package
 
 export default app;
