@@ -5,11 +5,33 @@
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, addDoc, serverTimestamp } = require('firebase/firestore');
 
-// Your Firebase config (replace with your actual config)
+// Load environment variables
+require('dotenv').config({ path: '.env.local' });
+
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  // Add your Firebase config here
-  // You can find this in your Firebase console
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
+
+// Validate that all required config values are present
+const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
+const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+
+if (missingFields.length > 0) {
+  console.error('❌ Missing required Firebase configuration:');
+  console.error('Please set the following environment variables in .env.local:');
+  missingFields.forEach(field => {
+    const envVar = `EXPO_PUBLIC_FIREBASE_${field.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
+    console.error(`  - ${envVar}`);
+  });
+  process.exit(1);
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

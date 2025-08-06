@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/adaptive-icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "bolta",
     "splash": {
       "image": "./assets/adaptive-icon.png",
       "resizeMode": "contain",
@@ -15,13 +16,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bolta.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.bolta.app"
     },
     "web": {
       "favicon": "./assets/adaptive-icon.png"
