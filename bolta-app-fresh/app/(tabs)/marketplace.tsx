@@ -11,10 +11,10 @@ import {
   RefreshControl
 } from 'react-native';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
-import { useSession } from '../providers/SessionProvider';
-import { Reward } from '../types';
-import { Colors } from '../constants/Colors';
+import { db } from '../../firebaseConfig';
+import { useSession } from '../../providers/SessionProvider';
+import { Reward } from '../../types';
+import { Colors } from '../../constants/Colors';
 
 /**
  * Reusable Reward Card Component

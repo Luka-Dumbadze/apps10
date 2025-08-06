@@ -1,11 +1,11 @@
 // app/(tabs)/profile.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useAuth } from '../../providers/AuthProvider';
+import { useSession } from '../../providers/SessionProvider';
 import { Colors } from '../../constants/Colors';
 
 export default function Profile() {
-  const { user, signOut } = useAuth();
+  const { user, signOut } = useSession();
 
   return (
     <View style={styles.container}>

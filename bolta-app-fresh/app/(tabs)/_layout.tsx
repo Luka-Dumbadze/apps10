@@ -21,6 +21,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="marketplace"
+        options={{
+          title: 'Marketplace',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'storefront' : 'storefront-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
