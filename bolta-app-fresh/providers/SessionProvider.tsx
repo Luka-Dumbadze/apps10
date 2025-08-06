@@ -224,9 +224,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async (): Promise<void> => {
     try {
+      console.log('Signing out user...');
       await firebaseSignOut(auth);
       setUser(null);
       await persistUser(null); // Clear persisted data
+      console.log('Sign out successful');
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;

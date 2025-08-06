@@ -26,7 +26,15 @@ export default function Profile() {
         { 
           text: 'Sign Out', 
           style: 'destructive',
-          onPress: signOut 
+          onPress: async () => {
+            try {
+              await signOut();
+              console.log('User signed out successfully');
+            } catch (error) {
+              console.error('Sign out error:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
+          }
         }
       ]
     );
