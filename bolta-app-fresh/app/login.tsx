@@ -2,14 +2,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../providers/AuthProvider';
+import { useSession } from '../providers/SessionProvider';
 import { Colors } from '../constants/Colors';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn } = useSession();
   const router = useRouter();
 
   const handleLogin = async () => {
