@@ -88,15 +88,8 @@ export default function Marketplace() {
     try {
       const rewardsRef = collection(db, 'rewards');
       
-      // Query for active rewards only
-      const q = query(
-        rewardsRef,
-        where('isActive', '==', true),
-        orderBy('category'),
-        orderBy('boltCost')
-      );
-      
-      const querySnapshot = await getDocs(q);
+      // Try to fetch all documents first (for testing)
+      const querySnapshot = await getDocs(rewardsRef);
       const rewardsData: Reward[] = [];
       
       querySnapshot.forEach((doc) => {
@@ -108,9 +101,26 @@ export default function Marketplace() {
       });
       
       setRewards(rewardsData);
+      
+      // If no rewards found, show info message
+      if (rewardsData.length === 0) {
+        console.log('No rewards found in the collection. You may need to add some test data.');
+      }
     } catch (error) {
       console.error('Error fetching rewards:', error);
-      Alert.alert('Error', 'Failed to load rewards. Please try again.');
+      
+      // Handle permission errors gracefully
+      if (error.code === 'permission-denied') {
+        Alert.alert(
+          'Database Setup Required', 
+          'The rewards collection needs to be set up with proper security rules. For now, the marketplace will show as empty.'
+        );
+      } else {
+        Alert.alert('Error', 'Failed to load rewards. Please try again.');
+      }
+      
+      // Set empty array so the app doesn't crash
+      setRewards([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
