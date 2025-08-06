@@ -1,5 +1,5 @@
 // app/login.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSession } from '../providers/SessionProvider';
@@ -9,8 +9,17 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useSession();
+  const { signIn, user } = useSession();
   const router = useRouter();
+
+  // Navigate to tabs when user is successfully logged in
+  useEffect(() => {
+    if (user && loading) {
+      console.log('User logged in successfully, navigating to tabs');
+      setLoading(false);
+      router.replace('/(tabs)');
+    }
+  }, [user, loading]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -21,12 +30,12 @@ export default function Login() {
     setLoading(true);
     try {
       await signIn(email, password);
-      // Navigate immediately after successful login
-      router.replace('/(tabs)');
+      console.log('Sign in successful, waiting for auth state change...');
+      // Don't navigate immediately - let the auth state change handle navigation
+      // The SessionProvider will update the user state and the index.tsx will handle navigation
     } catch (error: any) {
       Alert.alert('Login Error', error.message);
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading false on error
     }
   };
 

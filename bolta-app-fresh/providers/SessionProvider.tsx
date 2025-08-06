@@ -50,10 +50,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       try {
         const persistedUser = await AsyncStorage.getItem('bolta_user');
         if (persistedUser) {
-          setUser(JSON.parse(persistedUser));
+          const userData = JSON.parse(persistedUser);
+          setUser(userData);
+          console.log('Loaded persisted user:', userData.email);
         }
       } catch (error) {
         console.error('Error loading persisted user:', error);
+      } finally {
+        // Only set loading to false if no persisted user was found
+        // If we have a persisted user, let Firebase auth state handle the loading state
+        const persistedUser = await AsyncStorage.getItem('bolta_user');
+        if (!persistedUser) {
+          setLoading(false);
+        }
       }
     };
 
@@ -77,6 +86,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const unsubscribeAuth = onAuthStateChanged(
       auth,
       async (firebaseUser: FirebaseUser | null) => {
+        console.log('Auth state changed:', firebaseUser ? firebaseUser.email : 'null');
+        
         if (firebaseUser) {
           try {
             const userDocRef = doc(db, 'users', firebaseUser.uid);
@@ -99,6 +110,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 lastActive: now
               };
 
+              console.log('Setting user from Firestore:', updatedUser.email, 'Balance:', updatedUser.boltBalance);
               setUser(updatedUser);
               await persistUser(updatedUser); // Persist to AsyncStorage
             } else {
@@ -154,6 +166,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             await persistUser(null);
           }
         } else {
+          console.log('No authenticated user, clearing user state');
           setUser(null);
           await persistUser(null);
         }
@@ -226,16 +239,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      console.log('Updating bolt balance from', user.boltBalance, 'to', newBalance);
+      
+      // Update local state immediately for instant UI feedback
+      const updatedUser = { ...user, boltBalance: newBalance };
+      setUser(updatedUser);
+      await persistUser(updatedUser); // Persist updated data immediately
+      
+      // Then update Firestore
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
         boltBalance: newBalance
       });
-
-      const updatedUser = { ...user, boltBalance: newBalance };
-      setUser(updatedUser);
-      await persistUser(updatedUser); // Persist updated data
+      
+      console.log('Bolt balance updated successfully');
     } catch (error) {
       console.error('Error updating bolt balance:', error);
+      // Revert local state if Firestore update fails
+      setUser(user);
+      await persistUser(user);
       throw error;
     }
   };
