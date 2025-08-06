@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "dared-prototype"
+  },
+  "targets": {},
+  "etags": {
+    "dared-prototype": {
+      "extensionInstances": {}
+    }
+  },
+  "dataconnectEmulatorConfig": {}
+}

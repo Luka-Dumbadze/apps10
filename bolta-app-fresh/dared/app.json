@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Dared",
+    "slug": "dared-prototype",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/daredLogoYellow.jpg",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/daredLogoSplash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nikar.daredprototype"
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json",
+      "useNextNotificationsApi":true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/daredLogoYellow.jpg",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.nika_r.daredprototype"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/daredLogoYellow.jpg"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "75846f4c-847e-41db-be8e-a4774193d19a"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/75846f4c-847e-41db-be8e-a4774193d19a"
+    }
+  }
+}

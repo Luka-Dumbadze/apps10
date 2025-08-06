@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "106980213962",
+    "project_id": "dared-prototype",
+    "storage_bucket": "dared-prototype.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:106980213962:android:94d9ba3ccd319610552033",
+        "android_client_info": {
+          "package_name": "com.nika_r.daredprototype"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0xC1GLxKe4DbK_Goj9YnX0XsBM1MeZZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
