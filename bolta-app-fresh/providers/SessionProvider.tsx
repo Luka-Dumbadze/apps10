@@ -225,13 +225,31 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const signOut = async (): Promise<void> => {
     try {
       console.log('Signing out user...');
-      await firebaseSignOut(auth);
+      
+      // Set a timeout for the sign out process
+      const signOutPromise = firebaseSignOut(auth);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Sign out timeout')), 10000)
+      );
+      
+      await Promise.race([signOutPromise, timeoutPromise]);
+      
+      // Immediately clear local state regardless of Firebase response
+      console.log('Clearing local user state...');
       setUser(null);
       await persistUser(null); // Clear persisted data
+      
       console.log('Sign out successful');
     } catch (error) {
       console.error('Error signing out:', error);
-      throw error;
+      
+      // Even if Firebase sign out fails, clear local state
+      console.log('Clearing local state despite error...');
+      setUser(null);
+      await persistUser(null);
+      
+      // Don't throw error to prevent UI from staying stuck
+      console.log('Local sign out completed');
     }
   };
 

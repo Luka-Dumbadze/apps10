@@ -7,15 +7,17 @@ import {
   TouchableOpacity, 
   ScrollView,
   Alert,
-  RefreshControl
+  RefreshControl,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSession } from '../../providers/SessionProvider';
 import { Colors } from '../../constants/Colors';
 
 export default function Profile() {
-  const { user, signOut, refreshUserData } = useSession();
+  const { user, signOut, refreshUserData, loading } = useSession();
   const [refreshing, setRefreshing] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -28,11 +30,15 @@ export default function Profile() {
           style: 'destructive',
           onPress: async () => {
             try {
+              setSigningOut(true);
+              console.log('Starting sign out process...');
               await signOut();
               console.log('User signed out successfully');
+              // Navigation will be handled automatically by app/index.tsx
             } catch (error) {
               console.error('Sign out error:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
+              setSigningOut(false);
             }
           }
         }
@@ -51,10 +57,33 @@ export default function Profile() {
     }
   };
 
+  // Show signing out state
+  if (signingOut) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Signing out...</Text>
+      </View>
+    );
+  }
+
+  // Show loading state only if we're still loading and not signing out
+  if (!user && loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
+
+  // If no user and not loading, we should be redirected to login
+  // This is a fallback that shouldn't normally be reached
   if (!user) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading profile...</Text>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Redirecting...</Text>
       </View>
     );
   }
