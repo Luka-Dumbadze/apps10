@@ -102,9 +102,51 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
               setUser(updatedUser);
               await persistUser(updatedUser); // Persist to AsyncStorage
             } else {
-              console.error('User document not found in Firestore');
-              setUser(null);
-              await persistUser(null);
+              // User document doesn't exist - create it for existing authenticated users
+              console.log('User document not found, creating one...');
+              
+              const now: FirebaseTimestamp = {
+                seconds: Math.floor(Date.now() / 1000),
+                nanoseconds: 0
+              };
+
+              const newUser: User = {
+                uid: firebaseUser.uid,
+                name: firebaseUser.displayName || 'User',
+                email: firebaseUser.email || '',
+                boltBalance: 100, // Starting balance
+                createdAt: now,
+                lastActive: now,
+                preferences: {
+                  notifications: true,
+                  theme: 'light'
+                },
+                achievements: [],
+                totalEarned: 100,
+                totalSpent: 0
+              };
+
+              try {
+                await setDoc(userDocRef, newUser);
+                setUser(newUser);
+                await persistUser(newUser);
+                console.log('User document created successfully');
+              } catch (createError) {
+                console.error('Error creating user document:', createError);
+                // If we can't create the document, still set a basic user object
+                setUser({
+                  uid: firebaseUser.uid,
+                  name: firebaseUser.displayName || 'User',
+                  email: firebaseUser.email || '',
+                  boltBalance: 0,
+                  createdAt: now,
+                  lastActive: now,
+                  preferences: { notifications: true, theme: 'light' },
+                  achievements: [],
+                  totalEarned: 0,
+                  totalSpent: 0
+                });
+              }
             }
           } catch (error) {
             console.error('Error fetching user data:', error);

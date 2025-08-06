@@ -47,9 +47,44 @@ node scripts/addTestData.js
 npm start
 ```
 
+## Quick Setup for Development
+
+### Option 1: Temporary Development Rules (Easiest)
+```bash
+# Run the setup guide
+node scripts/setupFirestore.js
+
+# After setting up Firestore rules, add test data
+node scripts/addTestData.js
+
+# Start the app
+npm start
+```
+
+### Option 2: Production-Ready Setup
+Use the Firebase Admin SDK (requires service account key):
+```bash
+node scripts/addTestDataAdmin.js
+```
+
 ## Common Issues
 
-- **Firebase projectId error**: Make sure all Firebase environment variables are set in `.env.local`
-- **AsyncStorage warning**: This is now properly configured with React Native persistence
-- **Expo scheme warning**: Added scheme configuration to `app.json`
-- **Firebase permissions error**: Set up proper Firestore security rules as shown above
+### 🔥 Firebase Permissions Error
+- **Problem**: `7 PERMISSION_DENIED: Missing or insufficient permissions`
+- **Solution**: Run `node scripts/setupFirestore.js` and follow the instructions to set up Firestore rules
+
+### 👤 User Document Not Found Error
+- **Problem**: `User document not found in Firestore`
+- **Solution**: Fixed automatically - user documents are now created on first login
+
+### 📱 AsyncStorage Version Warning
+- **Problem**: `@react-native-async-storage/async-storage@1.24.0 - expected version: 2.1.2`
+- **Solution**: Already updated to correct version, warning may persist due to Firebase dependencies
+
+### 🔗 Expo Linking Warning
+- **Problem**: `Linking requires a build-time setting 'scheme'`
+- **Solution**: Already fixed with scheme configuration in `app.json`
+
+### 🔑 Firebase Configuration Error
+- **Problem**: `"projectId" not provided in firebase.initializeApp`
+- **Solution**: Make sure all Firebase environment variables are set in `.env.local`
