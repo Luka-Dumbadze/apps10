@@ -11,6 +11,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSession } from '../../providers/SessionProvider';
 import { Colors } from '../../constants/Colors';
 
@@ -29,17 +30,19 @@ export default function Profile() {
           text: 'Sign Out', 
           style: 'destructive',
           onPress: async () => {
+            setSigningOut(true);
+            console.log('🔴 Profile: User confirmed sign out');
+            
             try {
-              setSigningOut(true);
-              console.log('Starting sign out process...');
               await signOut();
-              console.log('User signed out successfully');
-              // Navigation will be handled automatically by app/index.tsx
+              console.log('🔴 Profile: Sign out completed, navigation should happen automatically');
             } catch (error) {
-              console.error('Sign out error:', error);
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
-              setSigningOut(false);
+              console.error('🔴 Profile: Sign out error:', error);
+              // Even on error, the user state should be cleared, so navigation should still work
             }
+            
+            // Don't set signingOut to false here - let the navigation handle it
+            // The component will unmount when redirected to login
           }
         }
       ]
@@ -208,6 +211,27 @@ export default function Profile() {
       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
         <Ionicons name="log-out-outline" size={20} color="white" />
         <Text style={styles.signOutText}>Sign Out</Text>
+      </TouchableOpacity>
+
+      {/* Emergency Sign Out Button (for debugging) */}
+      <TouchableOpacity 
+        style={[styles.signOutButton, { backgroundColor: Colors.textSecondary, marginTop: 10 }]} 
+        onPress={async () => {
+          console.log('🚨 Emergency sign out triggered');
+          try {
+            setSigningOut(true);
+            // Clear AsyncStorage directly
+            await AsyncStorage.removeItem('bolta_user');
+            console.log('🚨 AsyncStorage cleared');
+            // Force reload the app by clearing everything
+            window.location?.reload?.() || console.log('🚨 Manual app restart needed');
+          } catch (error) {
+            console.error('🚨 Emergency sign out error:', error);
+          }
+        }}
+      >
+        <Ionicons name="warning-outline" size={20} color="white" />
+        <Text style={styles.signOutText}>Emergency Sign Out</Text>
       </TouchableOpacity>
 
       {/* Footer Spacing */}

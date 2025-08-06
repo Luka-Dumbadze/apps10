@@ -223,34 +223,30 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async (): Promise<void> => {
+    console.log('🚪 Starting sign out process...');
+    
+    // Step 1: Clear local state immediately for instant UI feedback
+    setUser(null);
+    console.log('✅ User state cleared');
+    
+    // Step 2: Clear persisted storage
     try {
-      console.log('Signing out user...');
-      
-      // Set a timeout for the sign out process
-      const signOutPromise = firebaseSignOut(auth);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Sign out timeout')), 10000)
-      );
-      
-      await Promise.race([signOutPromise, timeoutPromise]);
-      
-      // Immediately clear local state regardless of Firebase response
-      console.log('Clearing local user state...');
-      setUser(null);
-      await persistUser(null); // Clear persisted data
-      
-      console.log('Sign out successful');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      
-      // Even if Firebase sign out fails, clear local state
-      console.log('Clearing local state despite error...');
-      setUser(null);
       await persistUser(null);
-      
-      // Don't throw error to prevent UI from staying stuck
-      console.log('Local sign out completed');
+      console.log('✅ Persisted data cleared');
+    } catch (error) {
+      console.error('⚠️ Error clearing persisted data:', error);
     }
+    
+    // Step 3: Sign out from Firebase (do this last, don't wait for it)
+    firebaseSignOut(auth)
+      .then(() => {
+        console.log('✅ Firebase sign out successful');
+      })
+      .catch((error) => {
+        console.error('⚠️ Firebase sign out error (but local sign out already completed):', error);
+      });
+    
+    console.log('🎉 Sign out process completed');
   };
 
   const updateBoltBalance = async (newBalance: number): Promise<void> => {
