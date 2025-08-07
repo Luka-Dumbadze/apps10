@@ -166,10 +166,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             await persistUser(null);
           }
         } else {
-          console.log('No authenticated user, clearing user state');
+          console.log('🔥 Auth state: No authenticated user, clearing user state');
           setUser(null);
           await persistUser(null);
+          console.log('🔥 Auth state: User state and storage cleared');
         }
+        console.log('🔥 Auth state: Setting loading to false');
         setLoading(false);
       },
       (error) => {
@@ -223,30 +225,35 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async (): Promise<void> => {
-    console.log('🚪 Starting sign out process...');
+    console.log('🚪 Starting regular sign out process...');
     
-    // Step 1: Clear local state immediately for instant UI feedback
-    setUser(null);
-    console.log('✅ User state cleared');
-    
-    // Step 2: Clear persisted storage
     try {
+      // Step 1: Sign out from Firebase first (this will trigger auth state change)
+      await firebaseSignOut(auth);
+      console.log('✅ Firebase sign out successful');
+      
+      // Step 2: Clear local state immediately after Firebase signout
+      setUser(null);
+      console.log('✅ User state cleared');
+      
+      // Step 3: Clear persisted storage
       await persistUser(null);
       console.log('✅ Persisted data cleared');
+      
     } catch (error) {
-      console.error('⚠️ Error clearing persisted data:', error);
+      console.error('⚠️ Firebase sign out error, clearing local state anyway:', error);
+      
+      // If Firebase fails, still clear local state
+      setUser(null);
+      try {
+        await persistUser(null);
+        console.log('✅ Local data cleared despite Firebase error');
+      } catch (storageError) {
+        console.error('⚠️ Storage clear error:', storageError);
+      }
     }
     
-    // Step 3: Sign out from Firebase (do this last, don't wait for it)
-    firebaseSignOut(auth)
-      .then(() => {
-        console.log('✅ Firebase sign out successful');
-      })
-      .catch((error) => {
-        console.error('⚠️ Firebase sign out error (but local sign out already completed):', error);
-      });
-    
-    console.log('🎉 Sign out process completed');
+    console.log('🎉 Regular sign out process completed');
   };
 
   const updateBoltBalance = async (newBalance: number): Promise<void> => {

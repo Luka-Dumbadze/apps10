@@ -31,18 +31,23 @@ export default function Profile() {
           style: 'destructive',
           onPress: async () => {
             setSigningOut(true);
-            console.log('🔴 Profile: User confirmed sign out');
+            console.log('🔴 Profile: User confirmed regular sign out');
             
             try {
               await signOut();
-              console.log('🔴 Profile: Sign out completed, navigation should happen automatically');
+              console.log('🔴 Profile: Regular sign out completed');
+              
+              // Add a small delay to ensure state propagation
+              setTimeout(() => {
+                console.log('🔴 Profile: Checking if navigation happened...');
+                // The SessionProvider should have triggered navigation via app/index.tsx
+              }, 500);
+              
             } catch (error) {
-              console.error('🔴 Profile: Sign out error:', error);
-              // Even on error, the user state should be cleared, so navigation should still work
+              console.error('🔴 Profile: Regular sign out error:', error);
+              Alert.alert('Sign Out Error', 'There was an issue signing out. Please try the Emergency Sign Out button below.');
+              setSigningOut(false);
             }
-            
-            // Don't set signingOut to false here - let the navigation handle it
-            // The component will unmount when redirected to login
           }
         }
       ]
@@ -213,25 +218,38 @@ export default function Profile() {
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
 
-      {/* Emergency Sign Out Button (for debugging) */}
+      {/* Emergency Sign Out Button (backup option) */}
       <TouchableOpacity 
-        style={[styles.signOutButton, { backgroundColor: Colors.textSecondary, marginTop: 10 }]} 
+        style={[styles.signOutButton, { backgroundColor: Colors.textSecondary, marginTop: 10, opacity: 0.7 }]} 
         onPress={async () => {
-          console.log('🚨 Emergency sign out triggered');
-          try {
-            setSigningOut(true);
-            // Clear AsyncStorage directly
-            await AsyncStorage.removeItem('bolta_user');
-            console.log('🚨 AsyncStorage cleared');
-            // Force reload the app by clearing everything
-            window.location?.reload?.() || console.log('🚨 Manual app restart needed');
-          } catch (error) {
-            console.error('🚨 Emergency sign out error:', error);
-          }
+          Alert.alert(
+            'Emergency Sign Out',
+            'Use this only if regular sign out is not working. This will force close the session.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Emergency Sign Out', 
+                style: 'destructive',
+                onPress: async () => {
+                  console.log('🚨 Emergency sign out triggered');
+                  try {
+                    setSigningOut(true);
+                    // Clear AsyncStorage directly
+                    await AsyncStorage.removeItem('bolta_user');
+                    console.log('🚨 AsyncStorage cleared');
+                    // Force reload the app by clearing everything
+                    window.location?.reload?.() || console.log('🚨 Manual app restart needed');
+                  } catch (error) {
+                    console.error('🚨 Emergency sign out error:', error);
+                  }
+                }
+              }
+            ]
+          );
         }}
       >
-        <Ionicons name="warning-outline" size={20} color="white" />
-        <Text style={styles.signOutText}>Emergency Sign Out</Text>
+        <Ionicons name="warning-outline" size={16} color="white" />
+        <Text style={[styles.signOutText, { fontSize: 14 }]}>Emergency Sign Out</Text>
       </TouchableOpacity>
 
       {/* Footer Spacing */}
