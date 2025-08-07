@@ -28,6 +28,19 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? 'home' : 'home-outline'} 
+              size={24} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="marketplace"
         options={{
           title: 'Marketplace',
@@ -51,13 +64,6 @@ export default function TabLayout() {
               color={color} 
             />
           ),
-        }}
-      />
-      {/* Hide other screens from tab bar */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          href: null, // This hides the tab from the tab bar
         }}
       />
     </Tabs>
