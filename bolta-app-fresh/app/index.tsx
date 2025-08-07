@@ -10,11 +10,15 @@ export default function Index() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('Index: loading =', loading, 'user =', user ? user.email : 'null');
+    
     if (!loading) {
       if (user) {
+        console.log('Index: Redirecting to tabs');
         // @ts-ignore
         router.replace('/(tabs)');
       } else {
+        console.log('Index: Redirecting to login');
         // @ts-ignore
         router.replace('/login');
       }

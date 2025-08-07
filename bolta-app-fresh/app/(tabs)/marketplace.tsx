@@ -78,7 +78,7 @@ export default function Marketplace() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { user, updateBoltBalance } = useSession();
+  const { user, updateBoltBalance, refreshUserData } = useSession();
 
   /**
    * Fetch rewards from Firestore
@@ -214,8 +214,11 @@ export default function Marketplace() {
         [{ text: 'OK', style: 'default' }]
       );
       
-      // Refresh rewards list to update stock count and user balance
-      await fetchRewards();
+      // Refresh rewards list to update stock count and ensure user balance is current
+      await Promise.all([
+        fetchRewards(),
+        refreshUserData()
+      ]);
       
     } catch (error) {
       console.error('Error redeeming reward:', error);

@@ -2,11 +2,20 @@
 // Run this script to add test rewards to your Firestore database
 // Usage: node scripts/addTestData.js
 
+// Import Firebase v9+ SDK with CommonJS
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, addDoc, serverTimestamp } = require('firebase/firestore');
 
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
+
+// Check if Firebase config exists
+if (!process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID) {
+  console.error('❌ Firebase configuration not found!');
+  console.log('Make sure you have created a .env.local file with your Firebase config.');
+  console.log('See README.md for setup instructions.');
+  process.exit(1);
+}
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -19,115 +28,121 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Validate that all required config values are present
-const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
-const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
-
-if (missingFields.length > 0) {
-  console.error('❌ Missing required Firebase configuration:');
-  console.error('Please set the following environment variables in .env.local:');
-  missingFields.forEach(field => {
-    const envVar = `EXPO_PUBLIC_FIREBASE_${field.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
-    console.error(`  - ${envVar}`);
-  });
-  process.exit(1);
-}
-
 // Initialize Firebase
+console.log('🔥 Initializing Firebase...');
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Test rewards data
-const testRewards = [
+const rewards = [
   {
-    partnerName: "Starbucks",
     rewardTitle: "$5 Coffee Gift Card",
     rewardDescription: "Enjoy a $5 gift card to use at any Starbucks location. Perfect for your morning coffee!",
+    partnerName: "Starbucks",
     boltCost: 50,
-    logoUrl: "https://via.placeholder.com/100x100?text=Starbucks",
-    category: "Food & Drinks",
-    isActive: true,
+    category: "Food & Drink",
     stockCount: 100,
+    isActive: true,
     expiryDays: 365,
+    imageUrl: "https://via.placeholder.com/300x200?text=Starbucks+Gift+Card",
     termsAndConditions: "Valid at participating locations. Cannot be combined with other offers.",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
   },
   {
-    partnerName: "Amazon",
     rewardTitle: "$10 Amazon Gift Card",
     rewardDescription: "Get a $10 Amazon gift card to use on millions of products. Free shipping included!",
+    partnerName: "Amazon",
     boltCost: 100,
-    logoUrl: "https://via.placeholder.com/100x100?text=Amazon",
     category: "Shopping",
-    isActive: true,
     stockCount: 50,
-    expiryDays: 730,
-    termsAndConditions: "Valid for Amazon.com purchases only. Cannot be resold.",
+    isActive: true,
+    expiryDays: 365,
+    imageUrl: "https://via.placeholder.com/300x200?text=Amazon+Gift+Card",
+    termsAndConditions: "Valid on Amazon.com. Cannot be resold or transferred.",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
   },
   {
-    partnerName: "Netflix",
-    rewardTitle: "1 Month Netflix Subscription",
-    rewardDescription: "Enjoy one month of Netflix premium streaming. Watch thousands of movies and shows!",
+    rewardTitle: "$15 Movie Theater Voucher",
+    rewardDescription: "Experience the latest blockbusters with a $15 movie theater voucher. Includes one standard ticket.",
+    partnerName: "AMC Theaters",
     boltCost: 150,
-    logoUrl: "https://via.placeholder.com/100x100?text=Netflix",
     category: "Entertainment",
-    isActive: true,
     stockCount: 25,
-    expiryDays: 30,
-    termsAndConditions: "For new users only. Auto-renewal may apply.",
+    isActive: true,
+    expiryDays: 180,
+    imageUrl: "https://via.placeholder.com/300x200?text=Movie+Voucher",
+    termsAndConditions: "Valid at participating AMC locations. Subject to availability and showtimes.",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
   },
   {
-    partnerName: "McDonald's",
-    rewardTitle: "Free Big Mac Meal",
-    rewardDescription: "Enjoy a free Big Mac meal including fries and a drink at participating McDonald's locations.",
-    boltCost: 75,
-    logoUrl: "https://via.placeholder.com/100x100?text=McDonalds",
-    category: "Food & Drinks",
+    rewardTitle: "$25 Restaurant Gift Card",
+    rewardDescription: "Treat yourself to a delicious meal with a $25 gift card to popular restaurant chains.",
+    partnerName: "Various Restaurants",
+    boltCost: 250,
+    category: "Food & Drink",
+    stockCount: 30,
     isActive: true,
-    stockCount: 200,
-    expiryDays: 60,
-    termsAndConditions: "Valid at participating locations. Must present coupon code.",
+    expiryDays: 365,
+    imageUrl: "https://via.placeholder.com/300x200?text=Restaurant+Gift+Card",
+    termsAndConditions: "Valid at participating restaurant locations. Cannot be combined with other promotions.",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
   },
   {
-    partnerName: "Spotify",
-    rewardTitle: "3 Months Spotify Premium",
-    rewardDescription: "Get 3 months of ad-free music streaming with Spotify Premium. Download and listen offline!",
-    boltCost: 120,
-    logoUrl: "https://via.placeholder.com/100x100?text=Spotify",
-    category: "Entertainment",
+    rewardTitle: "$50 Shopping Spree",
+    rewardDescription: "Go on a shopping spree with a $50 gift card to major retail stores. Fashion, electronics, and more!",
+    partnerName: "Target",
+    boltCost: 500,
+    category: "Shopping",
+    stockCount: 15,
     isActive: true,
-    stockCount: 75,
-    expiryDays: 90,
-    termsAndConditions: "For new premium users only. Auto-renewal applies after trial.",
+    expiryDays: 365,
+    imageUrl: "https://via.placeholder.com/300x200?text=Shopping+Spree",
+    termsAndConditions: "Valid at Target stores and online. Some restrictions may apply.",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
   }
 ];
 
-async function addTestData() {
+// Function to add rewards to Firestore
+async function addTestRewards() {
+  console.log('📝 Adding test rewards to Firestore...');
+  
   try {
-    console.log('Adding test rewards to Firestore...');
+    const rewardsRef = collection(db, 'rewards');
     
-    for (const reward of testRewards) {
-      const docRef = await addDoc(collection(db, 'rewards'), reward);
-      console.log(`Added reward: ${reward.rewardTitle} (ID: ${docRef.id})`);
+    for (let i = 0; i < rewards.length; i++) {
+      const reward = rewards[i];
+      console.log(`   Adding reward ${i + 1}/${rewards.length}: ${reward.rewardTitle}`);
+      
+      const docRef = await addDoc(rewardsRef, reward);
+      console.log(`   ✅ Added with ID: ${docRef.id}`);
     }
     
-    console.log('✅ All test rewards added successfully!');
+    console.log('');
+    console.log('🎉 Success! All test rewards have been added to Firestore.');
+    console.log('');
     console.log('You can now see rewards in your marketplace.');
+    console.log('');
+    console.log('Next steps:');
+    console.log('1. Start your app: npm start');
+    console.log('2. Navigate to the Marketplace tab');
+    console.log('3. Try redeeming a reward!');
     
-    process.exit(0);
   } catch (error) {
-    console.error('❌ Error adding test data:', error);
-    process.exit(1);
+    console.error('❌ Error adding test rewards:', error);
+    
+    if (error.code === 'permission-denied') {
+      console.log('');
+      console.log('🔧 This looks like a Firestore rules issue.');
+      console.log('Make sure you have set up the Firestore security rules as described in the README.');
+      console.log('Run: node scripts/setupFirestore.js for instructions.');
+    }
   }
 }
 
-addTestData();
+// Run the script
+console.log('🚀 BOLTA Test Data Setup');
+console.log('========================');
+console.log(`📡 Project ID: ${firebaseConfig.projectId}`);
+console.log('');
+
+addTestRewards();
