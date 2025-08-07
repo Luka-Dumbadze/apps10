@@ -1,5 +1,5 @@
 // app/(tabs)/profile.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -11,6 +11,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSession } from '../../providers/SessionProvider';
 import { Colors } from '../../constants/Colors';
@@ -19,6 +20,17 @@ export default function Profile() {
   const { user, signOut, refreshUserData, loading } = useSession();
   const [refreshing, setRefreshing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const router = useRouter();
+
+  // Watch for user state changes and redirect if user becomes null
+  useEffect(() => {
+    console.log('🔴 Profile: User state changed, user =', user ? user.email : 'null', 'loading =', loading, 'signingOut =', signingOut);
+    
+    if (!loading && !user) {
+      console.log('🔴 Profile: No user detected, redirecting to login...');
+      router.replace('/login');
+    }
+  }, [user, loading, router]);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -37,11 +49,15 @@ export default function Profile() {
               await signOut();
               console.log('🔴 Profile: Regular sign out completed');
               
-              // Add a small delay to ensure state propagation
+              // Force navigation to login after sign out
+              console.log('🔴 Profile: Forcing navigation to login...');
+              // Try multiple navigation approaches
+              router.replace('/login');
+              // Also try navigating to root index which should handle the redirect
               setTimeout(() => {
-                console.log('🔴 Profile: Checking if navigation happened...');
-                // The SessionProvider should have triggered navigation via app/index.tsx
-              }, 500);
+                console.log('🔴 Profile: Backup navigation to root index...');
+                router.replace('/');
+              }, 100);
               
             } catch (error) {
               console.error('🔴 Profile: Regular sign out error:', error);
