@@ -42,27 +42,33 @@ export default function Profile() {
           text: 'Sign Out', 
           style: 'destructive',
           onPress: async () => {
+            console.log('🔴 Profile: User confirmed sign out - using reliable method');
             setSigningOut(true);
-            console.log('🔴 Profile: User confirmed regular sign out');
             
             try {
-              await signOut();
-              console.log('🔴 Profile: Regular sign out completed');
+              // Use the proven emergency sign out method
+              console.log('🔴 Profile: Starting reliable sign out...');
               
-              // Force navigation to login after sign out
-              console.log('🔴 Profile: Forcing navigation to login...');
-              // Try multiple navigation approaches
-              router.replace('/login');
-              // Also try navigating to root index which should handle the redirect
-              setTimeout(() => {
-                console.log('🔴 Profile: Backup navigation to root index...');
-                router.replace('/');
-              }, 100);
+              // Step 1: Firebase sign out (optional, don't wait for it)
+              signOut().catch(error => console.log('Firebase sign out error (ignored):', error));
+              
+              // Step 2: Clear AsyncStorage immediately (this is what works)
+              await AsyncStorage.removeItem('bolta_user');
+              console.log('🔴 Profile: AsyncStorage cleared');
+              
+              // Step 3: Force reload/navigation (this is what works)
+              if (typeof window !== 'undefined' && window.location) {
+                console.log('🔴 Profile: Reloading page...');
+                window.location.reload();
+              } else {
+                console.log('🔴 Profile: Navigating to login...');
+                router.replace('/login');
+              }
               
             } catch (error) {
-              console.error('🔴 Profile: Regular sign out error:', error);
-              Alert.alert('Sign Out Error', 'There was an issue signing out. Please try the Emergency Sign Out button below.');
-              setSigningOut(false);
+              console.error('🔴 Profile: Sign out error:', error);
+              // Even on error, try to navigate
+              router.replace('/login');
             }
           }
         }
