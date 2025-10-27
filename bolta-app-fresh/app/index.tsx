@@ -2,11 +2,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
-import { useAuth } from '../providers/AuthProvider';
+import { useSession } from '../providers/SessionProvider';
 import { Colors } from '../constants/Colors';
 
 export default function Index() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useSession();
   const router = useRouter();
 
   useEffect(() => {

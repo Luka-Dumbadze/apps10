@@ -1,11 +1,11 @@
 // app/(tabs)/index.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useAuth } from '../../providers/AuthProvider';
+import { useSession } from '../../providers/SessionProvider';
 import { Colors } from '../../constants/Colors';
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user } = useSession();
 
   return (
     <View style={styles.container}>

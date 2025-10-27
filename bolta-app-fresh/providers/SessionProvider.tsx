@@ -1,0 +1,235 @@
+// providers/SessionProvider.tsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  User as FirebaseUser
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth, db } from '../firebaseConfig';
+import { User, FirebaseTimestamp } from '../types';
+
+interface SessionContextType {
+  user: User | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  updateBoltBalance: (newBalance: number) => Promise<void>;
+  refreshUserData: () => Promise<void>;
+}
+
+const SessionContext = createContext<SessionContextType>({
+  user: null,
+  loading: true,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+  updateBoltBalance: async () => {},
+  refreshUserData: async () => {},
+});
+
+export function useSession() {
+  const context = useContext(SessionContext);
+  if (!context) {
+    throw new Error('useSession must be used within a SessionProvider');
+  }
+  return context;
+}
+
+export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load persisted user data on app start
+  useEffect(() => {
+    const loadPersistedUser = async () => {
+      try {
+        const persistedUser = await AsyncStorage.getItem('bolta_user');
+        if (persistedUser) {
+          setUser(JSON.parse(persistedUser));
+        }
+      } catch (error) {
+        console.error('Error loading persisted user:', error);
+      }
+    };
+
+    loadPersistedUser();
+  }, []);
+
+  // Helper function to persist user data
+  const persistUser = async (userData: User | null) => {
+    try {
+      if (userData) {
+        await AsyncStorage.setItem('bolta_user', JSON.stringify(userData));
+      } else {
+        await AsyncStorage.removeItem('bolta_user');
+      }
+    } catch (error) {
+      console.error('Error persisting user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(
+      auth,
+      async (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+          try {
+            const userDocRef = doc(db, 'users', firebaseUser.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+              const userData = userDoc.data() as User;
+              
+              const now: FirebaseTimestamp = {
+                seconds: Math.floor(Date.now() / 1000),
+                nanoseconds: 0
+              };
+              
+              await updateDoc(userDocRef, {
+                lastActive: now
+              });
+
+              const updatedUser = {
+                ...userData,
+                lastActive: now
+              };
+
+              setUser(updatedUser);
+              await persistUser(updatedUser); // Persist to AsyncStorage
+            } else {
+              console.error('User document not found in Firestore');
+              setUser(null);
+              await persistUser(null);
+            }
+          } catch (error) {
+            console.error('Error fetching user data:', error);
+            setUser(null);
+            await persistUser(null);
+          }
+        } else {
+          setUser(null);
+          await persistUser(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Auth state change error:', error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  const signIn = async (email: string, password: string): Promise<void> => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      console.error('Error signing in:', error);
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string, name: string): Promise<void> => {
+    try {
+      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
+      
+      const now: FirebaseTimestamp = {
+        seconds: Math.floor(Date.now() / 1000),
+        nanoseconds: 0
+      };
+
+      const newUser: User = {
+        uid: firebaseUser.uid,
+        name,
+        email,
+        boltBalance: 100,
+        createdAt: now,
+        lastActive: now,
+        preferences: {
+          notifications: true,
+          theme: 'light'
+        },
+        achievements: [],
+        totalEarned: 100,
+        totalSpent: 0
+      };
+
+      await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
+    }
+  };
+
+  const signOut = async (): Promise<void> => {
+    try {
+      await firebaseSignOut(auth);
+      setUser(null);
+      await persistUser(null); // Clear persisted data
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
+  };
+
+  const updateBoltBalance = async (newBalance: number): Promise<void> => {
+    if (!user) {
+      throw new Error('No user logged in');
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        boltBalance: newBalance
+      });
+
+      const updatedUser = { ...user, boltBalance: newBalance };
+      setUser(updatedUser);
+      await persistUser(updatedUser); // Persist updated data
+    } catch (error) {
+      console.error('Error updating bolt balance:', error);
+      throw error;
+    }
+  };
+
+  const refreshUserData = async (): Promise<void> => {
+    if (!user) {
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as User;
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      throw error;
+    }
+  };
+
+  return (
+    <SessionContext.Provider
+      value={{
+        user,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        updateBoltBalance,
+        refreshUserData
+      }}
+    >
+      {children}
+    </SessionContext.Provider>
+  );
+}
